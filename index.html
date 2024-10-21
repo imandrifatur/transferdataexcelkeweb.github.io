@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Impor Data dari Excel</title>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.3/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.4.0/css/responsive.dataTables.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.3/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.4.0/js/dataTables.responsive.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        input[type="file"] {
+            margin: 20px 0;
+            display: block;
+            width: 100%;
+        }
+        table {
+            width: 100%;
+            margin: 0 auto;
+            border-collapse: collapse;
+        }
+        button {
+            background-color: #f44336;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        /* Responsive styling */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            button {
+                padding: 8px;
+                font-size: 14px;
+            }
+        }
+        /* Ensure table is responsive */
+        .dataTables_wrapper {
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h2>Impor Data dari Excel</h2>
+    <input type="file" id="fileInput" />
+    <button onclick="importExcel()">Impor Excel</button>
+
+    <table id="data-table" class="display responsive nowrap">
+        <thead>
+            <tr>
+                <th>Nama</th>
+                <th>NISN</th>
+                <th>Asal Sekolah</th>
+                <th>Aksi</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+
+    <script>
+        $(document).ready(function() {
+            $('#data-table').DataTable({
+                responsive: true // Enable responsive feature
+            });
+        });
+
+        function importExcel() {
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                alert('Silakan pilih file Excel terlebih dahulu.');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+
+                // Clear existing data
+                const table = $('#data-table').DataTable();
+                table.clear();
+
+                jsonData.slice(1).forEach((row) => {
+                    table.row.add([
+                        row[0], // Nama
+                        row[1], // NISN
+                        row[2], // Asal Sekolah
+                        `<button onclick="deleteRow(this)">Hapus</button>`
+                    ]).draw(false);
+                });
+            };
+
+            reader.readAsArrayBuffer(file);
+        }
+
+        function deleteRow(button) {
+            const table = $('#data-table').DataTable();
+            const row = button.closest('tr');
+            table.row(row).remove().draw();
+        }
+    </script>
+</body>
+</html>
